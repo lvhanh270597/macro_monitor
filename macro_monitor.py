@@ -11,22 +11,43 @@ TGA_BULLISH_THRESHOLD = 300_000  # Đơn vị trong API là triệu USD (300.000
 US30Y_CRISIS_THRESHOLD = 5.50    # Ngưỡng 5.5%
 
 def get_tga_data():
-    url = (
-        "https://treasury.gov"
-        "v1/accounting/dts/operating_cash_balance"
-        "?filter=account_type:eq:Treasury General Account (TGA) Closing Balance"
-        "&sort=-record_date&page[size]=5"
-    )
-    resp = requests.get(url, timeout=15).json()
-    records = resp.get("data", [])
+    base_url = "https://treasury.gov"
+    params = {
+        "filter": "account_type:eq:Treasury General Account (TGA) Closing Balance",
+        "sort": "-record_date",
+        "page[size]": 5
+    }
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json"
+    }
+    resp = requests.get(base_url, params=params, headers=headers, timeout=15)
+    
+    # In ra status và 200 ký tự đầu tiên nếu API không trả về JSON để dễ debug
+    if resp.status_code != 200 or not resp.text.strip():
+        print(f"Lỗi API TGA - Status: {resp.status_code}, Nội dung: {resp.text[:200]}")
+        return None, None, None
+
+    try:
+        records = resp.json().get("data", [])
+    except ValueError:
+        print(f"Phản hồi không phải JSON: {resp.text[:200]}")
+        return None, None, None
+
     if not records:
         return None, None, None
     
-    latest_date = records[0]["record_date"]
-    latest_bal = float(records[0]["open_today_bal"]) # Triệu USD
-    prev_5d_bal = float(records[-1]["open_today_bal"])
+    # Chú ý: records[0] là bản ghi mới nhất
+    latest_record = records[0]
+    oldest_record = records[-1]
+    
+    latest_date = latest_record["record_date"]
+    latest_bal = float(latest_record["open_today_bal"])
+    prev_5d_bal = float(oldest_record["open_today_bal"])
     diff_5d = latest_bal - prev_5d_bal
+    
     return latest_date, latest_bal, diff_5d
+
 
 def get_us30y_yield():
     # ^TYX trên Yahoo Finance đại diện cho lợi suất trái phiếu Mỹ 30 năm
