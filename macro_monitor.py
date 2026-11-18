@@ -83,12 +83,25 @@ def main():
     # Luôn gửi báo cáo định kỳ hoặc chỉ gửi khi có cảnh báo (bỏ điều kiện if alerts nếu muốn nhận mỗi ngày)
     status_header = "🚨 *CẢNH BÁO VĨ MÔ QUAN TRỌNG*" if alerts else "📊 *BÁO CÁO THANH KHOẢN KHO BẠC MỸ*"
     alert_text = "\n".join(alerts) if alerts else "✅ Các chỉ số chưa chạm ngưỡng kích hoạt cực đoan."
+
+    tga_date_text = tga_date if tga_date is not None else "Không có dữ liệu"
+    tga_bal_text = (
+        f"${tga_bal/1000:,.2f} tỷ USD"
+        if tga_bal is not None
+        else "Không có dữ liệu"
+    )
+    tga_diff_text = (
+        f"{tga_diff/1000:+.2f}B"
+        if tga_diff is not None
+        else "Không có dữ liệu"
+    )
+    us30y_text = f"{us30y}%" if us30y is not None else "Không có dữ liệu"
     
     msg = (
         f"{status_header}\n"
-        f"📅 Dữ liệu ngày: `{tga_date}`\n\n"
-        f"• *Số dư TGA:* `${tga_bal/1000:,.2f} tỷ USD` (Thay đổi 5 phiên: `{tga_diff/1000:+.2f}B`)\n"
-        f"• *Lợi suất US30Y:* `{us30y}%`\n\n"
+        f"📅 Dữ liệu ngày: `{tga_date_text}`\n\n"
+        f"• *Số dư TGA:* `{tga_bal_text}` (Thay đổi 5 phiên: `{tga_diff_text}`)\n"
+        f"• *Lợi suất US30Y:* `{us30y_text}`\n\n"
         f"{alert_text}"
     )
     send_telegram_alert(msg)
